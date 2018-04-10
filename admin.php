@@ -2,7 +2,6 @@
 
 /**
  * @file
- *
  * Cockpit ImageStyles admin functions.
  */
 
@@ -29,14 +28,14 @@ $app->on('admin.init', function () use ($app) {
 });
 
 // Dashboard widgets.
-$this->on("admin.dashboard.widgets", function($widgets) {
+$this->on("admin.dashboard.widgets", function ($widgets) {
 
   $imagestyles = $this->module("imagestyles")->styles(TRUE);
 
   $widgets[] = [
     "name"    => "imagestyles",
     "content" => $this->view("imagestyles:views/widgets/dashboard.php", compact('imagestyles')),
-    "area"    => 'aside-right'
+    "area"    => 'aside-right',
   ];
 
 }, 100);

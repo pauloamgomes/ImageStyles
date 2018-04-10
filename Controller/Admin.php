@@ -27,7 +27,7 @@ class Admin extends AuthController {
   /**
    * Style controller.
    */
-  public function style($name = null) {
+  public function style($name = NULL) {
 
     $style = [
       'name' => '',
@@ -44,7 +44,7 @@ class Admin extends AuthController {
 
     if ($name) {
       if (!$style = $this->module('imagestyles')->style($name)) {
-        return false;
+        return FALSE;
       }
     }
 

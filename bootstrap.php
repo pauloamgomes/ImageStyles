@@ -2,14 +2,12 @@
 
 /**
  * @file
- *
  * Cockpit module bootstrap implementation.
  */
 
 $this->module('imagestyles')->extend([
 
   'createStyle' => function ($name, $data = []) {
-
     if (!trim($name)) {
       return FALSE;
     }
@@ -29,12 +27,12 @@ $this->module('imagestyles')->extend([
     $time = time();
 
     $style = array_replace_recursive([
-        '_id'         => uniqid($name),
-        'name'        => $name,
-        'description' => $name,
-        'effects'     => [],
-        '_created'    => $time,
-        '_modified'   => $time,
+      '_id'         => uniqid($name),
+      'name'        => $name,
+      'description' => $name,
+      'effects'     => [],
+      '_created'    => $time,
+      '_modified'   => $time,
     ], $data);
 
     $export = var_export($style, TRUE);
@@ -48,102 +46,103 @@ $this->module('imagestyles')->extend([
     return $style;
   },
 
-  'updateStyle' => function($name, $data) {
-      $metapath = $this->app->path("#storage:imagestyles/{$name}.imagestyle.php");
+  'updateStyle' => function ($name, $data) {
+    $metapath = $this->app->path("#storage:imagestyles/{$name}.imagestyle.php");
 
-      if (!$metapath) {
-        return FALSE;
-      }
-
-      $data['_modified'] = time();
-
-      $style  = include($metapath);
-      $style  = array_merge($style, $data);
-
-      $this->app->trigger("imagestyles.save.before", [$style]);
-      $this->app->trigger("imagestyles.save.before.{$name}", [$style]);
-
-      $export  = var_export($style, TRUE);
-
-      if (!$this->app->helper('fs')->write($metapath, "<?php\n return {$export};")) {
-          return FALSE;
-      }
-
-      $this->app->trigger('imagestyles.save.after', [$style]);
-      $this->app->trigger("imagestyles.save.after.{$name}", [$style]);
-
-      return $style;
-  },
-
-  'saveStyle' => function($name, $data) {
-      if (!trim($name)) {
-          return FALSE;
-      }
-
-      return isset($data['_id']) ? $this->updateStyle($name, $data) : $this->createStyle($name, $data);
-  },
-
-  'removeStyle' => function($name) {
-
-      if ($style = $this->style($name)) {
-
-          $this->app->helper("fs")->delete("#storage:imagestyles/{$name}.imagestyle.php");
-
-          $this->app->trigger('imagestyles.remove', [$style]);
-          $this->app->trigger("imagestyles.remove.{$name}", [$style]);
-
-          return TRUE;
-      }
-
+    if (!$metapath) {
       return FALSE;
+    }
+
+    $data['_modified'] = time();
+
+    $style  = include $metapath;
+    $style  = array_merge($style, $data);
+
+    $this->app->trigger("imagestyles.save.before", [$style]);
+    $this->app->trigger("imagestyles.save.before.{$name}", [$style]);
+
+    $export  = var_export($style, TRUE);
+
+    if (!$this->app->helper('fs')->write($metapath, "<?php\n return {$export};")) {
+      return FALSE;
+    }
+
+    $this->app->trigger('imagestyles.save.after', [$style]);
+    $this->app->trigger("imagestyles.save.after.{$name}", [$style]);
+
+    return $style;
   },
 
-  'exists' => function($name) {
+  'saveStyle' => function ($name, $data) {
+    if (!trim($name)) {
+      return FALSE;
+    }
+
+    return isset($data['_id']) ? $this->updateStyle($name, $data) : $this->createStyle($name, $data);
+  },
+
+  'removeStyle' => function ($name) {
+
+    if ($style = $this->style($name)) {
+
+      $this->app->helper("fs")->delete("#storage:imagestyles/{$name}.imagestyle.php");
+
+      $this->app->trigger('imagestyles.remove', [$style]);
+      $this->app->trigger("imagestyles.remove.{$name}", [$style]);
+
+      return TRUE;
+    }
+
+    return FALSE;
+  },
+
+  'exists' => function ($name) {
       return $this->app->path("#storage:imagestyles/{$name}.imagestyle.php");
   },
 
-  'styles' => function($extended = FALSE) {
+  'styles' => function ($extended = FALSE) {
 
-      $stores = [];
+    $stores = [];
 
-      foreach($this->app->helper("fs")->ls('*.imagestyle.php', '#storage:imagestyles') as $path) {
+    foreach ($this->app->helper("fs")->ls('*.imagestyle.php', '#storage:imagestyles') as $path) {
 
-          $store = include($path->getPathName());
+      $store = include $path->getPathName();
 
-          if ($extended) {
-              $store['itemsCount'] = $this->count($store['name']);
-          }
-
-          $stores[$store['name']] = $store;
+      if ($extended) {
+        $store['itemsCount'] = $this->count($store['name']);
       }
 
-      return $stores;
+      $stores[$store['name']] = $store;
+    }
+
+    return $stores;
   },
 
-  'style' => function($name) {
-    static $styles; // cache
+  'style' => function ($name) {
+    // Cache.
+    static $styles;
 
     if (is_null($styles)) {
-        $styles = [];
+      $styles = [];
     }
 
     if (!is_string($name)) {
-        return FALSE;
+      return FALSE;
     }
 
     if (!isset($styles[$name])) {
 
-        $styles[$name] = FALSE;
+      $styles[$name] = FALSE;
 
-        if ($path = $this->exists($name)) {
-            $styles[$name] = include($path);
-        }
+      if ($path = $this->exists($name)) {
+        $styles[$name] = include $path;
+      }
     }
 
     return $styles[$name];
   },
 
-  'applyStyle' => function($name, $src, $settings = []) {
+  'applyStyle' => function ($name, $src, $settings = []) {
     if (!$style = $this->style($name)) {
       return FALSE;
     }
@@ -166,13 +165,18 @@ $this->module('imagestyles')->extend([
     }
 
     // Override style definitions for base64 with settings argument.
-    if (isset($settings['base64'])) {
+    if (isset($settings['base64']) && $settings['base64']) {
       $options['base64'] = 1;
     }
 
     // Override style definitions for domain with settings argument.
-    if (isset($settings['domain'])) {
+    if (isset($settings['domain']) && $settings['domain']) {
       $options['domain'] = 1;
+    }
+
+    // Override style definitions for domain with settings argument.
+    if (isset($settings['output']) && $settings['output']) {
+      $options['output'] = 1;
     }
 
     // Set the effects.
@@ -183,7 +187,7 @@ $this->module('imagestyles')->extend([
     return $this->app->module('cockpit')->thumbnail($options);
   },
 
-  'previewStyle' => function($src, $style) {
+  'previewStyle' => function ($src, $style) {
     $options = [
       'src' => $src,
       'rebuild' => 1,
@@ -221,4 +225,4 @@ if (COCKPIT_API_REQUEST) {
 }
 
 // Include actions.
-include_once(__DIR__ . '/actions.php');
+include_once __DIR__ . '/actions.php';

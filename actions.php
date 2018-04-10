@@ -2,11 +2,10 @@
 
 /**
  * @file
- *
  * Implements image styles related actions on cockpit collections.
  */
 
-$app->on('collections.find.after', function($name, &$data) use($app) {
+$app->on('collections.find.after', function ($name, &$data) use ($app) {
   // Get the collection.
   $collection = $app->module('collections')->collection($name);
 
@@ -34,7 +33,7 @@ $app->on('collections.find.after', function($name, &$data) use($app) {
 
         // Iterate over the styles and get the style image url.
         foreach ($field['options']['styles'] as $style) {
-          if($url = $app->module('imagestyles')->applyStyle($style, $values['path'])) {
+          if ($url = $app->module('imagestyles')->applyStyle($style, $values['path'])) {
             $data[$idx][$fieldName]['styles'][] = [
               'style' => $style,
               'path' => $url,
