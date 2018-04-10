@@ -12,18 +12,14 @@ class RestApi extends Controller {
   /**
    * Retrieve an image.
    */
-  public function style() {
-    // Get request params.
-    if (!$name = $this->param('style', NULL)) {
-      return FALSE;
-    }
-
+  public function style($name) {
     if (!$src = $this->param('src', NULL)) {
       return FALSE;
     }
 
-    $settings['output'] = $this->param('output', FALSE);
-    $settings['rebuild'] = $this->param('rebuild', FALSE);
+    $settings['output'] = $this->param('output', 0);
+    $settings['base64'] = $this->param('base64', 0);
+    $settings['rebuild'] = $this->param('rebuild', 0);
 
     return $this->module('imagestyles')->applyStyle($name, $src, $settings);
   }

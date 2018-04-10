@@ -6,7 +6,7 @@ Cockpit provides a simple mechanism to transform images where its possible by in
 Taking into consideration similar concepts from other CMS's, where its possible to encapsulate those transformations in a single entity and therefore apply it automatically to all images present in a collection, this addon provides:
 
 * Admin interface to configure the Image Styles
-* REST endpoint to apply the image style to an image (e.g. ```/api/imagestyles/style?token=XX&style=Banner&src=storage/uploads/image.jpg```)
+* REST endpoint to apply the image style to an image (e.g. ```/api/imagestyles/style/Banner?token=XX&src=storage/uploads/image.jpg```)
 * Cockpit Action that will be triggered when collection entries are retrieved and will inject to the image fields (that are configured for the image styles) the generated URLs
 * No 3rd party dependencies, everything is based on the Cockpit API
 
@@ -58,13 +58,25 @@ Using the REST API its possible to apply the created style to any existing image
 
 A typical image style will return just the URL:
 
+```
+curl "http://cockpit.docker.localhost/api/imagestyles/style/Banner?token=XXXXXXX&src=storage/uploads/image.jpg"
+```
+
 ![REST API Request](https://monosnap.com/file/tpHX5UNDHirnOGDxExENWAxkcieml3.png)
 
 The image style can be configured to return a Base64 string by default (or that can be passed in the request params):
 
+```
+curl "http://cockpit.docker.localhost/api/imagestyles/style/Banner?token=XXXXXXX&src=storage/uploads/image.jpg&base64=1"
+```
+
 ![REST API Request with base64](https://monosnap.com/file/D3dULBgZ7RZK9JrvZi3CCzrOx0nfJa.png)
 
 The output request parameter can be used to receive the image instead of a URL:
+
+```
+curl "http://cockpit.docker.localhost/api/imagestyles/style/Banner?token=XXXXXXX&src=storage/uploads/image.jpg&output=1" > image.jpg
+```
 
 ![REST API Request with output](https://monosnap.com/file/69591aVZYH64NPG1PebCKeDiu2VmZj.png)
 
