@@ -48,11 +48,59 @@ The Cockpit Action will transform the Cockpit collections API response by inject
 
 The Addon doesn't require any extra configuration. When enabled, it will be available to the admin with all features.
 
+## Supported fields
+
+The Addon supports the default Image, Set, Repeater and Gallery fields. When configuring each field its just required to set a "styles" attribute as below:
+
+### Set field example
+```json
+{
+  "fields": [
+    {
+      "name": "image",
+      "type": "image",
+      "styles": [
+        "SimpleBlock"
+      ]
+    },
+    {
+      "name": "description",
+      "type": "text"
+    }
+  ]
+}
+
+```
+
+### Repeater field example
+```json
+{
+  "field": {
+    "type": "image",
+    "label": "Image",
+    "styles": [
+      "SimpleBlock"
+    ]
+  }
+}
+
+```
+
+### Gallery field example
+```json
+{
+  "styles": [
+    "SimpleBlock"
+  ]
+}
+
+```
+
 ## Usage
 
 The first step to use the Addon requires the creation of a new image style, that can be observed in the following screencast:
 
-![Screencast](https://monosnap.com/file/y9gkZp50ED7PEk06zjfD1YCA43BBZ1.png)
+![Screencast](https://api.monosnap.com/rpc/file/download?id=y9gkZp50ED7PEk06zjfD1YCA43BBZ1)
 
 Using the REST API its possible to apply the created style to any existing image and receive the image URL, Base64 or binary format:
 
@@ -82,7 +130,7 @@ curl "http://cockpit.docker.localhost/api/imagestyles/style/Banner?token=XXXXXXX
 
 For configuring an image field to have one or more styles automatically added it's only required to edit the field settings and add a "styles" attribute. When retrieving a collection that includes that image field, the corresponding image style URLs will be incorporated in the response:
 
-![Image Style with Collection Field](https://monosnap.com/file/B8J3HFNAza972Syi6110hRnxbPBLnf.png)
+![Image Style with Collection Field](https://api.monosnap.com/rpc/file/download?id=B8J3HFNAza972Syi6110hRnxbPBLnf)
 
 ## Copyright and license
 
