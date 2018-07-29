@@ -14,9 +14,9 @@ $this("acl")->addResource('imagestyles', [
 /*
  * add menu entry if the user has access to group stuff
  */
-$this->on('cockpit.menu.aside', function () {
+$this->on('cockpit.view.settings.item', function () {
   if ($this->module('cockpit')->hasaccess('imagestyles', 'manage.view')) {
-     $this->renderView("imagestyles:views/partials/menu.php");
+     $this->renderView("imagestyles:views/partials/settings.php");
   }
 });
 
