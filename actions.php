@@ -9,16 +9,25 @@ $app->on('collections.find.after', function ($name, &$data) use ($app) {
   // Get the collection.
   $collection = $app->module('collections')->collection($name);
 
-  // Get the collection fields.
+  // Get the collection fields' definitions.
   $fields = [];
   foreach ($collection['fields'] as $field) {
     $fields[$field['name']] = $field;
   }
 
   foreach ($data as $idx => $entry) {
-    foreach ($entry as $fieldName => $values) {
-      // Check for the field type and inspect for presence of styles.
-      switch ($field['type']) {
+    foreach ($entry as $fieldName => $values) {    
+      
+      // Check if current field in entry is defined by user, we don't want '_id' etc. to proceed.
+      if(!array_key_exists($fieldName, $fields)) {
+        continue;
+      }
+
+      // Optionally check if current field is one of four special types
+      // Without this, types like Date might end in switch default (although conditionals will stop them, because nobody will put "styles" there)
+      //if(!in_array($fields[$fieldName]['type'], ['repeater', 'set', 'gallery', 'image'])) { continue; }
+
+      switch ($fields[$fieldName]['type']) {
         case 'repeater':
           foreach ($data[$idx][$field['name']] as $idx1 => $repeatField) {
             if (!isset($repeatField['value']['path'])) {
@@ -55,45 +64,32 @@ $app->on('collections.find.after', function ($name, &$data) use ($app) {
               }
             }
           }
-
           break;
 
         case 'gallery':
-          if (!isset($field['options']['styles']) || !is_array($field['options']['styles'])) {
-            continue;
-          }
-          if (!is_array($data[$idx][$fieldName]) || empty($data[$idx][$fieldName])) {
-            continue;
-          }
-          foreach ($data[$idx][$fieldName] as $idx1 => $item) {
-            if (empty($item['path'])) {
-              continue;
-            }
-            foreach ($field['options']['styles'] as $idx2 => $style) {
-              if ($url = $app->module('imagestyles')->applyStyle($style, $item['path'])) {
-                $data[$idx][$fieldName][$idx1]['styles'][$idx2] = [
-                  'style' => $style,
-                  'path' => $url,
-                ];
+          if (is_array($values) && !empty($fields[$fieldName]['options']['styles'])) {
+
+            foreach ($values as $idx1 => $item) {
+              if (empty($item['path'])) {
+                continue;
+              }
+              // Iterate over the styles and get the style image url.
+              foreach ( (array) $fields[$fieldName]['options']['styles'] as $style ) {
+                if ($url = $app->module('imagestyles')->applyStyle($style, $item['path'])) {
+                  $data[$idx][$fieldName][$idx1]['styles'][] = [
+                    'style' => $style,
+                    'path' => $url,
+                  ];
+                }
               }
             }
           }
           break;
 
-        default:
-          // Check for image (path).
-          if (isset($values['path']) && isset($fields[$fieldName])) {
-            $field = $fields[$fieldName];
-            // Check field definition for required attributes.
-            if (!isset($field['options']) || empty($field['options']['styles'])) {
-              continue;
-            }
-            // Check the styles.
-            if (!is_array($field['options']['styles'])) {
-              continue;
-            }
+        case 'image':
+          if (!empty($values['path']) && !empty($fields[$fieldName]['options']['styles'])) {
             // Iterate over the styles and get the style image url.
-            foreach ($field['options']['styles'] as $style) {
+            foreach ( (array) $fields[$fieldName]['options']['styles'] as $style ) {
               if ($url = $app->module('imagestyles')->applyStyle($style, $values['path'])) {
                 $data[$idx][$fieldName]['styles'][] = [
                   'style' => $style,
@@ -102,10 +98,8 @@ $app->on('collections.find.after', function ($name, &$data) use ($app) {
               }
             }
           }
-
           break;
       }
-
     }
   }
 });
