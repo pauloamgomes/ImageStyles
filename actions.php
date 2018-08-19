@@ -19,13 +19,9 @@ $app->on('collections.find.after', function ($name, &$data) use ($app) {
     foreach ($entry as $fieldName => $values) {    
       
       // Check if current field in entry is defined by user, we don't want '_id' etc. to proceed.
-      if(!array_key_exists($fieldName, $fields)) {
+      if (!isset($fields[$fieldName])) {
         continue;
       }
-
-      // Optionally check if current field is one of four special types
-      // Without this, types like Date might end in switch default (although conditionals will stop them, because nobody will put "styles" there)
-      //if(!in_array($fields[$fieldName]['type'], ['repeater', 'set', 'gallery', 'image'])) { continue; }
 
       switch ($fields[$fieldName]['type']) {
         case 'repeater':
