@@ -16,8 +16,8 @@ $app->on('collections.find.after', function ($name, &$data) use ($app) {
   }
 
   foreach ($data as $idx => $entry) {
-    foreach ($entry as $fieldName => $values) {    
-      
+    foreach ($entry as $fieldName => $values) {
+
       // Check if current field in entry is defined by user, we don't want '_id' etc. to proceed.
       if (!isset($fields[$fieldName])) {
         continue;
@@ -25,7 +25,7 @@ $app->on('collections.find.after', function ($name, &$data) use ($app) {
 
       switch ($fields[$fieldName]['type']) {
         case 'repeater':
-          foreach ($data[$idx][$field['name']] as $idx1 => $repeatField) {
+          foreach ($data[$idx][$fieldName] as $idx1 => $repeatField) {
             if (!isset($repeatField['value']['path'])) {
               continue;
             }
@@ -44,7 +44,10 @@ $app->on('collections.find.after', function ($name, &$data) use ($app) {
           break;
 
         case 'set':
-          foreach ($field['options']['fields'] as $idx1 => $subField) {
+          if (!isset($field['options']['fields'])) {
+            continue;
+          }
+          foreach ((array) $field['options']['fields'] as $idx1 => $subField) {
             if (!isset($subField['styles']) || !is_array($subField['styles'])) {
               continue;
             }
