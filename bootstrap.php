@@ -222,7 +222,8 @@ if (COCKPIT_API_REQUEST) {
   $this->on('cockpit.rest.init', function ($routes) {
       $routes['imagestyles'] = 'ImageStyles\\Controller\\RestApi';
   });
+
+  // Include actions.
+  include_once __DIR__ . '/actions.php';
 }
 
-// Include actions.
-include_once __DIR__ . '/actions.php';
