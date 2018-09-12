@@ -1,3 +1,4 @@
+@hasaccess?('imagestyles', 'manage.view')
 <div>
 
     <div class="uk-panel-box uk-panel-card">
@@ -6,7 +7,7 @@
             <strong class="uk-panel-box-header-title uk-flex-item-1">
                 @lang('Image Styles')
 
-                @hasaccess?('imagestyles', 'create')
+                @hasaccess?('imagestyles', 'manage.admin')
                 <a href="@route('/image-styles/style')" class="uk-icon-plus uk-margin-small-left" title="@lang('Create Image Style')" data-uk-tooltip></a>
                 @end
             </strong>
@@ -60,3 +61,4 @@
     </div>
 
 </div>
+@end

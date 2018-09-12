@@ -15,7 +15,7 @@
         </span>
 
         <div class="uk-float-right">
-            @if($app->module('cockpit')->hasaccess('imagestyles', 'manage.create'))
+            @if($app->module('cockpit')->hasaccess('imagestyles', 'manage.admin'))
             <a class="uk-button uk-button-primary uk-button-large" href="@route('/image-styles/style')">
                 <i class="uk-icon-plus-circle uk-icon-justify"></i> @lang('Add')
             </a>
@@ -40,6 +40,7 @@
 
             <div class="uk-panel uk-panel-box uk-panel-card">
                 <div class="uk-grid uk-grid-small">
+                    @if($app->module('cockpit')->hasaccess('imagestyles', 'manage.admin'))
                     <div data-uk-dropdown="delay:300">
                         <a class="uk-icon-cog"" href="@route('/image-styles/style')/{name}"></a>
                         <a class="uk-text-bold uk-flex-item-1 uk-text-center uk-link-muted" href="@route('/image-styles/style')/{name}">{ name }</a>
@@ -52,6 +53,9 @@
                             </ul>
                         </div>
                     </div>
+                    @else
+                    <span class="uk-text-large uk-display-block">{ name }</span>
+                    @endif
                 </div>
 
                 <div class="uk-margin-top">

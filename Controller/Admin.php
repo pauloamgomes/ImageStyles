@@ -28,6 +28,9 @@ class Admin extends AuthController {
    * Style controller.
    */
   public function style($name = NULL) {
+    if (!$this->app->module('cockpit')->hasaccess('imagestyles', 'manage.admin')) {
+      return FALSE;
+    }
 
     $style = [
       'name' => '',
