@@ -26,6 +26,30 @@ $app->on('collections.find.after', function ($name, &$data) use ($app) {
       switch ($fields[$fieldName]['type']) {
         case 'repeater':
           foreach ($data[$idx][$fieldName] as $idx1 => $repeatField) {
+            // If repeater field is a set with an image field.
+            if ($repeatField['field']['type'] == 'set') {
+              $setStyles = [];
+              foreach ($repeatField['field']['options']['fields'] as $setField) {
+                if ($setField['type'] == 'image' && isset($setField['styles'])) {
+                  $setStyles[$setField['name']] = $setField['styles'];
+                }
+              }
+              foreach ($setStyles as $setFieldname => $setStyle) {
+                if (isset($data[$idx][$fieldName][$idx1]['value'][$setFieldname]['path'])) {
+                  foreach ($setStyle as $style) {
+                    if ($url = $app->module('imagestyles')->applyStyle($style, $data[$idx][$fieldName][$idx1]['value'][$setFieldname]['path'])) {
+                      $data[$idx][$fieldName][$idx1]['value'][$setFieldname]['styles'][] = [
+                        'style' => $style,
+                        'path' => $url,
+                      ];
+                    }
+                  }
+                }
+              }
+              continue;
+            }
+
+            // If repeater field is an image.
             if (!isset($repeatField['value']['path'])) {
               continue;
             }
@@ -47,7 +71,28 @@ $app->on('collections.find.after', function ($name, &$data) use ($app) {
           if (!isset($field['options']['fields'])) {
             continue;
           }
+
           foreach ((array) $field['options']['fields'] as $idx1 => $subField) {
+
+            // If set subfield is a repeater check we have an image field inside.
+            if ($subField['type'] == 'repeater' && $subField['options']['field']['type'] == 'image' && !empty($subField['options']['field']['styles'])) {
+              $repeaterStyles[$subField['options']['field']['name']] = (array) $subField['options']['field']['styles'];
+              foreach ($repeaterStyles as $repeatFieldName => $styles) {
+                foreach ($styles as $style) {
+                  foreach ($data[$idx][$fieldName][$subField['name']] as $idx2 => $repeaterField) {
+                    if (!empty($repeaterField['value']['path']) && $url = $app->module('imagestyles')->applyStyle($style, $repeaterField['value']['path'])) {
+                      $data[$idx][$fieldName][$subField['name']][$idx2]['value']['styles'][] = [
+                        'style' => $style,
+                        'path' => $url,
+                      ];
+                    }
+                  }
+                }
+              }
+              continue;
+            }
+
+            // Normal image field inside a set.
             if (!isset($subField['styles']) || !is_array($subField['styles'])) {
               continue;
             }
