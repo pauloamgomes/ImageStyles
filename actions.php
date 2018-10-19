@@ -15,6 +15,13 @@ $app->on('collections.find.after', function ($name, &$data) use ($app) {
     $fields[$field['name']] = $field;
   }
 
+  $styles = $app->module('imagestyles')->styles();
+  if (empty($styles)) {
+    return;
+  }
+
+  $uploads_path = ltrim(str_replace(COCKPIT_DIR, '', $app->path("#uploads:")), '/');
+
   foreach ($data as $idx => $entry) {
     foreach ($entry as $fieldName => $values) {
 
@@ -139,6 +146,37 @@ $app->on('collections.find.after', function ($name, &$data) use ($app) {
                   'style' => $style,
                   'path' => $url,
                 ];
+              }
+            }
+          }
+          break;
+
+        case 'layout':
+          // Configured assets in layout dont accept any options.
+          // Instead of retrieving the configured styles we generate for all.
+          foreach ($data[$idx][$fieldName] as $idx1 => $fieldData) {
+            if (!isset($fieldData['settings'])) {
+              continue;
+            }
+            foreach ($fieldData['settings'] as $settingName => $setting) {
+              if (is_array($setting) && isset($setting['path']) && (!empty($setting['image']) || isset($setting['meta']) || array_key_exists('width', $fieldData['settings']))) {
+                foreach ($styles as $style => $styleSettings) {
+                  if (!empty($styleSettings['base64']) || !empty($styleSettings['output'])) {
+                    continue;
+                  }
+
+                  $setting['path'] = ltrim($setting['path'], '/');
+                  if (strpos($setting['path'], $uploads_path) !== 0) {
+                    $setting['path'] = $uploads_path . $setting['path'];
+                  }
+
+                  if ($url = $app->module('imagestyles')->applyStyle($style, $setting['path'])) {
+                    $data[$idx][$fieldName][$idx1]['settings'][$settingName]['styles'][] = [
+                      'style' => $style,
+                      'path' => $url,
+                    ];
+                  }
+                }
               }
             }
           }
