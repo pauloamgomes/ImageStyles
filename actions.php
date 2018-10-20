@@ -6,6 +6,7 @@
  */
 
 $app->on('collections.find.after', function ($name, &$data) use ($app) {
+
   // Get the collection.
   $collection = $app->module('collections')->collection($name);
 
@@ -15,9 +16,29 @@ $app->on('collections.find.after', function ($name, &$data) use ($app) {
     $fields[$field['name']] = $field;
   }
 
+  // Get all available styles.
   $styles = $app->module('imagestyles')->styles();
   if (empty($styles)) {
     return;
+  }
+  // Get all image fields from layout components.
+  $content = '{}';
+  if ($file = $app->path('#storage:components.json')) {
+    $content = @file_get_contents($file);
+  }
+  $json = json_decode($content, true);
+  if (!$json) {
+    $json = [];
+  }
+  $allComponents = new \ArrayObject($json);
+  $components = [];
+  foreach ($allComponents as $name => $component) {
+    foreach ($component ['fields'] as $field) {
+      if (isset($field['options']) && !empty($field['options']['styles'])) {
+        $fields['components'][$name][$field['name']] = $field;
+        $components[$name] = $component;
+      }
+    }
   }
 
   $uploads_path = ltrim(str_replace(COCKPIT_DIR, '', $app->path("#uploads:")), '/');
@@ -151,32 +172,52 @@ $app->on('collections.find.after', function ($name, &$data) use ($app) {
           }
           break;
 
+        case 'asset':
+          if (!empty($values['path'])) {
+            $values['path'] = ltrim($values['path'], '/');
+            if (strpos($values['path'], $uploads_path) !== 0) {
+              $values['path'] = $uploads_path . $values['path'];
+            }
+
+            foreach ( (array) $fields[$fieldName]['options']['styles'] as $style ) {
+              if ($url = $app->module('imagestyles')->applyStyle($style, $values['path'])) {
+                $data[$idx][$fieldName]['styles'][] = [
+                  'style' => $style,
+                  'path' => $url,
+                ];
+              }
+            }
+          }
+          break;
+
         case 'layout':
-          // Configured assets in layout dont accept any options.
-          // Instead of retrieving the configured styles we generate for all.
           foreach ($data[$idx][$fieldName] as $idx1 => $fieldData) {
-            if (!isset($fieldData['settings'])) {
+            if (!isset($fieldData['settings']) || !isset($fieldData['component'])) {
               continue;
             }
-            foreach ($fieldData['settings'] as $settingName => $setting) {
-              if (is_array($setting) && isset($setting['path']) && (!empty($setting['image']) || isset($setting['meta']) || array_key_exists('width', $fieldData['settings']))) {
-                foreach ($styles as $style => $styleSettings) {
-                  if (!empty($styleSettings['base64']) || !empty($styleSettings['output'])) {
-                    continue;
-                  }
-
-                  $setting['path'] = ltrim($setting['path'], '/');
-                  if (strpos($setting['path'], $uploads_path) !== 0) {
-                    $setting['path'] = $uploads_path . $setting['path'];
-                  }
-
-                  if ($url = $app->module('imagestyles')->applyStyle($style, $setting['path'])) {
-                    $data[$idx][$fieldName][$idx1]['settings'][$settingName]['styles'][] = [
-                      'style' => $style,
-                      'path' => $url,
-                    ];
-                  }
+            if (!isset($components[$fieldData['component']])) {
+              continue;
+            }
+            foreach ($fields['components'][$fieldData['component']] as $componentField) {
+              $cpFieldName = $componentField['name'];
+              if (!isset($fields['components'][$fieldData['component']][$cpFieldName])) {
+                continue;
+              }
+              $path = ltrim($fieldData['settings'][$cpFieldName]['path'], '/');
+              if (strpos($path, $uploads_path) !== 0) {
+                $path = $uploads_path . $path;
+              }
+              foreach ($fields['components'][$fieldData['component']][$cpFieldName]['options']['styles'] as $style) {
+                if (!isset($styles[$style])) {
+                  continue;
                 }
+                if ($url = $app->module('imagestyles')->applyStyle($style, $path)) {
+                  $data[$idx][$fieldName][$idx1]['settings'][$cpFieldName]['styles'][] = [
+                    'style' => $style,
+                    'path' => $url,
+                  ];
+                }
+
               }
             }
           }
