@@ -210,6 +210,44 @@ $this->module('imagestyles')->extend([
     return $this->app->module('cockpit')->thumbnail($options);
   },
 
+  'gridStyles' => function($fieldData, $components) {
+    $uploads_path = ltrim(str_replace(COCKPIT_DIR, '', $this->app->path("#uploads:")), '/');
+    foreach ((array) $fieldData['columns'] as $idx => $column) {
+      foreach ($column['children'] as $idx2 => $children) {
+        if (isset($components[$children['component']])) {
+          $compStyles = [];
+          foreach ((array) $components[$children['component']]['fields'] as $field) {
+            if (isset($field['options']['styles'])) {
+              $compStyles[$field['name']] = $field['options']['styles'];
+            }
+          }
+          foreach ($compStyles as $field => $styles) {
+            if (!isset($children['settings'][$field])) {
+              continue;
+            }
+            if (!isset($children['settings'][$field]['path'])) {
+              continue;
+            }
+            $path = ltrim($children['settings'][$field]['path'], '/');
+            if (strpos($path, $uploads_path) !== 0) {
+              $path= $uploads_path . $path;
+            }
+            foreach ($styles as $style) {
+              if ($url = $this->app->module('imagestyles')->applyStyle($style, $path)) {
+                $fieldData['columns'][$idx]['children'][$idx2]['settings'][$field]['styles'][] = [
+                  'style' => $style,
+                  'path' => $url,
+                ];
+              }
+            }
+
+          }
+        }
+      }
+    }
+    return $fieldData;
+  },
+
 ]);
 
 // If admin.

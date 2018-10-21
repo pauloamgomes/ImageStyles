@@ -195,6 +195,10 @@ $app->on('collections.find.after', function ($name, &$data) use ($app) {
             if (!isset($fieldData['settings']) || !isset($fieldData['component'])) {
               continue;
             }
+            if ($fieldData['component'] === 'grid') {
+              $data[$idx][$fieldName][$idx1] = $app->module('imagestyles')->gridStyles($fieldData, $components);
+              continue;
+            }
             if (!isset($components[$fieldData['component']])) {
               continue;
             }
