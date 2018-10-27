@@ -7,6 +7,24 @@
 
 $this->module('imagestyles')->extend([
 
+  'getUrlStyles' => function($path, array $styles = []) : array {
+    $uploads_path = ltrim(str_replace(COCKPIT_DIR, '', $this->app->path("#uploads:")), '/');
+    $results = [];
+    $path = ltrim($path, '/');
+    if (strpos($path, $uploads_path) !== 0) {
+      $path = $uploads_path . $path;
+    }
+    foreach ($styles as $style) {
+      if ($url = $this->applyStyle($style, $path)) {
+        $results[] = [
+          'style' => $style,
+          'path' => $url,
+        ];
+      }
+    }
+    return $results;
+  },
+
   'createStyle' => function ($name, $data = []) {
     if (!trim($name)) {
       return FALSE;
@@ -165,17 +183,17 @@ $this->module('imagestyles')->extend([
     }
 
     // Override style definitions for base64 with settings argument.
-    if (isset($settings['base64']) && $settings['base64']) {
+    if (isset($settings['base64']) && (bool) $settings['base64']) {
       $options['base64'] = 1;
     }
 
     // Override style definitions for domain with settings argument.
-    if (isset($settings['domain']) && $settings['domain']) {
+    if (isset($settings['domain']) && (bool) $settings['domain']) {
       $options['domain'] = 1;
     }
 
     // Override style definitions for domain with settings argument.
-    if (isset($settings['output']) && $settings['output']) {
+    if (isset($settings['output']) && (bool) $settings['output']) {
       $options['output'] = 1;
     }
 
@@ -210,49 +228,18 @@ $this->module('imagestyles')->extend([
     return $this->app->module('cockpit')->thumbnail($options);
   },
 
-  'gridStyles' => function($fieldData, $components) {
-    $uploads_path = ltrim(str_replace(COCKPIT_DIR, '', $this->app->path("#uploads:")), '/');
-    foreach ((array) $fieldData['columns'] as $idx => $column) {
-      foreach ($column['children'] as $idx2 => $children) {
-        if (isset($components[$children['component']])) {
-          $compStyles = [];
-          foreach ((array) $components[$children['component']]['fields'] as $field) {
-            if (isset($field['options']['styles'])) {
-              $compStyles[$field['name']] = $field['options']['styles'];
-            }
-          }
-          foreach ($compStyles as $field => $styles) {
-            if (!isset($children['settings'][$field])) {
-              continue;
-            }
-            if (!isset($children['settings'][$field]['path'])) {
-              continue;
-            }
-            $path = ltrim($children['settings'][$field]['path'], '/');
-            if (strpos($path, $uploads_path) !== 0) {
-              $path= $uploads_path . $path;
-            }
-            foreach ($styles as $style) {
-              if ($url = $this->app->module('imagestyles')->applyStyle($style, $path)) {
-                $fieldData['columns'][$idx]['children'][$idx2]['settings'][$field]['styles'][] = [
-                  'style' => $style,
-                  'path' => $url,
-                ];
-              }
-            }
-
-          }
-        }
-      }
-    }
-    return $fieldData;
-  },
-
 ]);
+
+
 
 // If admin.
 if (COCKPIT_ADMIN && !COCKPIT_API_REQUEST) {
   include_once __DIR__ . '/admin.php';
+}
+
+if (COCKPIT_ADMIN) {
+  // Include actions.
+  include_once __DIR__ . '/actions.php';
 }
 
 // If REST include handlers for remote style actions.
@@ -260,8 +247,5 @@ if (COCKPIT_API_REQUEST) {
   $this->on('cockpit.rest.init', function ($routes) {
       $routes['imagestyles'] = 'ImageStyles\\Controller\\RestApi';
   });
-
-  // Include actions.
-  include_once __DIR__ . '/actions.php';
 }
 
