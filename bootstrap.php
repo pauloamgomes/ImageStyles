@@ -5,7 +5,168 @@
  * Cockpit module bootstrap implementation.
  */
 
+/**
+ * Create a custom storage (#styles) for storing the image styles.
+ * This is required in way to make use of core cockpit thumbnail() function.
+ */
+$this->on('cockpit.filestorages.init', function(&$storages) use ($app) {
+  $storages['styles'] = [
+    'adapter' => 'League\Flysystem\Adapter\Local',
+    'args' => [COCKPIT_PUBLIC_STORAGE_FOLDER . '/styles'],
+    'mount' => TRUE,
+    'url' => $app->pathToUrl('#storage:', TRUE) . 'styles',
+  ];
+});
+
+/**
+ * Image Style module functions.
+ */
 $this->module('imagestyles')->extend([
+
+  'getUrlStyles' => function ($path, array $styles = [], $settings = []) : array {
+    $uploads_path = ltrim(str_replace(COCKPIT_DIR, '', $this->app->path("#uploads:")), '/');
+    $results = [];
+    $path = ltrim($path, '/');
+    if (strpos($path, $uploads_path) !== 0) {
+      $path = $uploads_path . $path;
+    }
+
+    foreach ($styles as $style) {
+      if ($url = $this->applyStyle($style, $path, $settings)) {
+        $results[] = [
+          'style' => $style,
+          'path' => $url,
+        ];
+      }
+    }
+
+    return $results;
+  },
+
+  'deleteEntryStyles' => function ($name, $entry) : array {
+    $styles_path = '#storage:styles/' . $name . '/' . $entry['_id'];
+
+    if ($this->app->path($styles_path)) {
+      $this->app->helper('fs')->delete($styles_path);
+    }
+
+    return ['status' => 1];
+  },
+
+  'updateEntryStyles' => function ($collection, $entry) : array {
+    $cimgt = FALSE;
+
+    // Get all available styles.
+    $styles = array_map(function($style) {
+      return $style['name'];
+    }, $this->app->module('imagestyles')->styles());
+
+    if (empty($styles)) {
+      return $entry;
+    }
+
+    // Prepare the collection styles folder.
+    $styles_path = '#storage:styles/' . $collection['name'] . '/' . $entry['_id'];
+
+    if (!$this->app->path($styles_path)) {
+      if (!$this->app->helper('fs')->mkdir($styles_path)) {
+        return $entry;
+      }
+      $cimgt = time();
+    }
+
+    if (!file_exists($this->app->path($styles_path) . '/index.html')) {
+      $this->app->helper('fs')->write($this->app->path($styles_path) .'/index.html', '');
+    }
+
+    $settings['stylesfolder'] = 'styles://' . $collection['name'] . '/' . $entry['_id'];
+
+    // Get the collection fields' definitions.
+    $fields = [];
+    foreach ($collection['fields'] as $field) {
+      // Only fields that can have an image are processed.
+      switch ($field['type']) {
+        case 'asset':
+        case 'image':
+        case 'set':
+        case 'repeater':
+        case 'gallery':
+        case 'layout':
+          $fields[$field['name']] = $field;
+      }
+    }
+
+    // Get all image fields from layout components.
+    $content = '{}';
+    if ($file = $this->app->path('#storage:components.json')) {
+      $content = @file_get_contents($file);
+    }
+    $json = json_decode($content, true);
+    if (!$json) {
+      $json = [];
+    }
+    $components = new \ArrayObject($json);
+    foreach ($components as $name => $component) {
+      foreach ($component ['fields'] as $idx => $field) {
+        switch ($field['type']) {
+          case 'asset':
+          case 'image':
+          case 'set':
+          case 'repeater':
+          case 'gallery':
+          case 'layout':
+            $fields['_components'][$name][$field['name']] = $field;
+        }
+      }
+    }
+
+    $dot_fields = array_dot($fields);
+
+    // Get all paths inside a collection entry.
+    $paths = array_dot($entry);
+    foreach ($paths as $key => $value) {
+      if (!preg_match('/\.path$/', $key)) {
+        continue;
+      }
+      if (!preg_match('/\.(png|jpg|jpeg|gif|svg)$/i', $value)) {
+        continue;
+      }
+      $parent_path = str_replace('.path', '', $key);
+      $parent = array_get($entry, $parent_path);
+
+      if (!isset($parent['path'])) {
+        continue;
+      }
+
+      $segments = explode('.', $parent_path);
+      $field_name = end($segments);
+
+      $field_styles = _get_field_styles($dot_fields, $field_name, $fields);
+
+      // If no field styles are found (e.g. core layout components like image or gallery) we apply to all.
+      if (empty($field_styles)) {
+        $field_styles = $styles;
+      }
+
+      // Set a query string token to force update of images (to avoid caching).
+      if ($cimgt) {
+        $parent['cimgt'] = $cimgt;
+      }
+      else {
+        if (empty($parent['cimgt'])) {
+          $parent['cimgt'] = time();
+        }
+      }
+
+      $settings['token'] = $parent['cimgt'];
+
+      $parent['styles'] = $this->app->module('imagestyles')->getUrlStyles($value, $field_styles, $settings);
+
+      array_set($entry, $parent_path, $parent);
+    }
+
+    return $entry;
+  },
 
   'createStyle' => function ($name, $data = []) {
     if (!trim($name)) {
@@ -159,23 +320,28 @@ $this->module('imagestyles')->extend([
       'height' => $style['height'],
     ];
 
+    // If we have a custom folder stor storing the styles we pass it into thumbnail options.
+    if (isset($settings['stylesfolder'])) {
+      $options['cachefolder'] = $settings['stylesfolder'];
+    }
+
     // Set anchor if its defined in the style.
     if (isset($style['anchor'])) {
       $options['fp'] = $style['anchor'];
     }
 
     // Override style definitions for base64 with settings argument.
-    if (isset($settings['base64']) && $settings['base64']) {
+    if (isset($settings['base64']) && (bool) $settings['base64']) {
       $options['base64'] = 1;
     }
 
     // Override style definitions for domain with settings argument.
-    if (isset($settings['domain']) && $settings['domain']) {
+    if (isset($settings['domain']) && (bool) $settings['domain']) {
       $options['domain'] = 1;
     }
 
     // Override style definitions for domain with settings argument.
-    if (isset($settings['output']) && $settings['output']) {
+    if (isset($settings['output']) && (bool) $settings['output']) {
       $options['output'] = 1;
     }
 
@@ -184,7 +350,35 @@ $this->module('imagestyles')->extend([
       $options[$effect['type']] = isset($effect['options']['value']) ? $effect['options']['value'] : TRUE;
     }
 
-    return $this->app->module('cockpit')->thumbnail($options);
+    // Generate the styled image (thumb) using cockpit thumbnail() function.
+    $thumb = $this->app->module('cockpit')->thumbnail($options);
+
+    // If site url is defined in the config.
+    $site_url = $this->app->getSiteUrl();
+    if (strpos($thumb, $site_url) !== FALSE) {
+      $thumb = str_replace($site_url, '', $thumb);
+    }
+    // Get the base url and remove it.
+    $base_url = $this->app->baseUrl('/');
+
+    if (strpos($thumb, $base_url) !== FALSE) {
+      $thumb = str_replace($base_url, '', $thumb);
+    }
+
+    // If domain is set to true force it in the output.
+    if ($options['domain'] && strpos($thumb, 'http') === FALSE) {
+      $thumb = rtrim($base_url, '/') . $thumb;
+    }
+
+    // Remove the storage folder.
+
+    $thumb = str_replace('storage/', '/', $thumb);
+
+    if (!empty($settings['token'])) {
+      $thumb = "{$thumb}?cimgt={$settings['token']}";
+    }
+
+    return $thumb;
   },
 
   'previewStyle' => function ($src, $style) {
@@ -210,49 +404,13 @@ $this->module('imagestyles')->extend([
     return $this->app->module('cockpit')->thumbnail($options);
   },
 
-  'gridStyles' => function($fieldData, $components) {
-    $uploads_path = ltrim(str_replace(COCKPIT_DIR, '', $this->app->path("#uploads:")), '/');
-    foreach ((array) $fieldData['columns'] as $idx => $column) {
-      foreach ($column['children'] as $idx2 => $children) {
-        if (isset($components[$children['component']])) {
-          $compStyles = [];
-          foreach ((array) $components[$children['component']]['fields'] as $field) {
-            if (isset($field['options']['styles'])) {
-              $compStyles[$field['name']] = $field['options']['styles'];
-            }
-          }
-          foreach ($compStyles as $field => $styles) {
-            if (!isset($children['settings'][$field])) {
-              continue;
-            }
-            if (!isset($children['settings'][$field]['path'])) {
-              continue;
-            }
-            $path = ltrim($children['settings'][$field]['path'], '/');
-            if (strpos($path, $uploads_path) !== 0) {
-              $path= $uploads_path . $path;
-            }
-            foreach ($styles as $style) {
-              if ($url = $this->app->module('imagestyles')->applyStyle($style, $path)) {
-                $fieldData['columns'][$idx]['children'][$idx2]['settings'][$field]['styles'][] = [
-                  'style' => $style,
-                  'path' => $url,
-                ];
-              }
-            }
-
-          }
-        }
-      }
-    }
-    return $fieldData;
-  },
-
 ]);
 
-// If admin.
+
+// If admin include relevant files.
 if (COCKPIT_ADMIN && !COCKPIT_API_REQUEST) {
   include_once __DIR__ . '/admin.php';
+  include_once __DIR__ . '/actions.php';
 }
 
 // If REST include handlers for remote style actions.
@@ -260,8 +418,5 @@ if (COCKPIT_API_REQUEST) {
   $this->on('cockpit.rest.init', function ($routes) {
       $routes['imagestyles'] = 'ImageStyles\\Controller\\RestApi';
   });
-
-  // Include actions.
-  include_once __DIR__ . '/actions.php';
 }
 

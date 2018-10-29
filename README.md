@@ -7,7 +7,7 @@ Taking into consideration similar concepts from other CMS's, where its possible 
 
 * Admin interface to configure the Image Styles
 * REST endpoint to apply the image style to an image (e.g. ```/api/imagestyles/style/Banner?token=XX&src=storage/uploads/image.jpg```)
-* Cockpit Action that will be triggered when collection entries are retrieved and will inject to the image fields (that are configured for the image styles) the generated URLs
+* Generation of all image styles when saving a collection
 * No 3rd party dependencies, everything is based on the Cockpit API
 
 The Cockpit Action will transform the Cockpit collections API response by injecting a "styles" attribute in the image fields:
@@ -30,13 +30,39 @@ The Cockpit Action will transform the Cockpit collections API response by inject
             ]
         },
         "_modified": 1523221256,
-        "_created": 1523219175,
-        "_id": "5aca7ae7db780doc1764785784",
-        "_mby": "5a61396e7640edoc1261186187"
     }
 ]
 ```
 
+Since version 1.7 and due performance concerns the image styles are not generated anymore during the collections.find.after hook, and instead when the collection is saved.
+This removes the risks of impacting the performance of the Cockpit API for fetching collections.
+The previous example JSON is replaced as below:
+
+```json
+[
+    {
+        "name": "My Collection Entry",
+        "image": {
+            "path": "/storage/uploads/2018/01/31/5a71198012e6fimage12.png",
+            "cimgt": 1540853512,
+            "styles": [
+                {
+                    "style": "Banner",
+                    "path": "/styles/page/46dcaf8ebdcf761ff954a71e25114480_800x200_90_1523051274_thumbnail_b28354b543375bfa94dabaeda722927f.png?cimgt=1540853512"
+                },
+                {
+                    "style": "Square",
+                    "path": "/styles/page/3d4aa297d753af28f8bceedf8bc77098_200x200_90_1523051274_resize_adb115059e28d960fa8badfac5516667.png?cimgt=1540853512"
+                }
+            ]
+        },
+        "_modified": 1523221256,
+    }
+]
+```
+
+The images are now stored on the storage/styles/<collection-name> folder instead of the storage/thumbs, so they are not removed when clearing the Cockpit cache.
+A query string (cimgt) based on the modification time is used as a simple cache burst mechanism. It's possible force the rebuild of the image styles for a collection when editing the collection.
 
 ## Installation
 
@@ -46,21 +72,44 @@ The Cockpit Action will transform the Cockpit collections API response by inject
 
 ## Configuration
 
-The Addon doesn't require any extra configuration. When enabled, it will be available to the admin with all features.
+The Addon doesn't require any extra configuration.
+When enabled, it will be available to the admin with all features.
+
+### Permissions
+
+A set of permissions that can be configured per role:
+
+- manage.view - can view image styles
+- manage.admin - can create, edit and delete image styles
+- rebuild - can rebuild the generated styles for a collection
 
 ## Supported fields
 
-The Addon supports the default Image, Set, Repeater and Gallery fields. When configuring each field its just required to set a "styles" attribute as below:
+The Addon supports the below field types:
+
+- Image
+- Asset
+- Gallery
+
+Above fields can be used in nested fields like:
+
+- Layout (since version 1.6)
+- Set
+- Repeater
+
+
+When configuring each field its just required to set a "styles" attribute as below:
 
 ### Set field example
 ```json
 {
   "fields": [
     {
-      "name": "image",
+      "name": "MyImage",
       "type": "image",
       "styles": [
-        "SimpleBlock"
+        "SimpleBlock",
+        "Square"
       ]
     },
     {
@@ -69,7 +118,6 @@ The Addon supports the default Image, Set, Repeater and Gallery fields. When con
     }
   ]
 }
-
 ```
 
 ### Repeater field example
@@ -83,7 +131,6 @@ The Addon supports the default Image, Set, Repeater and Gallery fields. When con
     ]
   }
 }
-
 ```
 
 ### Gallery field example
@@ -93,7 +140,6 @@ The Addon supports the default Image, Set, Repeater and Gallery fields. When con
     "SimpleBlock"
   ]
 }
-
 ```
 
 ## Usage
@@ -130,7 +176,7 @@ curl "http://cockpit.docker.localhost/api/imagestyles/style/Banner?token=XXXXXXX
 
 For configuring an image field to have one or more styles automatically added it's only required to edit the field settings and add a "styles" attribute. When retrieving a collection that includes that image field, the corresponding image style URLs will be incorporated in the response:
 
-![Image Style with Collection Field](https://api.monosnap.com/rpc/file/download?id=B8J3HFNAza972Syi6110hRnxbPBLnf)
+![Image Style with Field](https://api.monosnap.com/rpc/file/download?id=GtxS0KcGjeEvNuMCWUnujDHK482lmQ)
 
 ## Copyright and license
 

@@ -20,6 +20,7 @@ class RestApi extends Controller {
     $settings['output'] = $this->param('output', 0);
     $settings['base64'] = $this->param('base64', 0);
     $settings['rebuild'] = $this->param('rebuild', 0);
+    $settings['domain'] = $this->param('domain', 0);
 
     return $this->module('imagestyles')->applyStyle($name, $src, $settings);
   }

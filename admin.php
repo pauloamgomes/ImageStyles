@@ -9,6 +9,7 @@
 $this("acl")->addResource('imagestyles', [
   'manage.view',
   'manage.admin',
+  'rebuild',
 ]);
 
 /*
@@ -39,3 +40,8 @@ $this->on("admin.dashboard.widgets", function ($widgets) {
   ];
 
 }, 100);
+
+
+$this->on('collections.entry.aside', function() {
+  $this->renderView("imagestyles:views/partials/entry-aside.php");
+});
