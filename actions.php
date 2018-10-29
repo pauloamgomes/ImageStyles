@@ -7,36 +7,44 @@
 
 include_once __DIR__ . '/utils.php';
 
-$app->on('collections.save.before', function($name, &$entry, $isUpdate) use($app) {
 
-  // Get the collection.
+/**
+ * Remove all saved styles when removing the collection.
+ */
+$app->on('collections.remove.before', function($name, $criteria) use($app) {
+  $styles_path = '#storage:styles/' . $name . '/' . $criteria['_id'];
+  if ($app->path($styles_path)) {
+    $app->helper('fs')->delete($styles_path);
+  }
+});
+
+/**
+ * On each collection.save.after populate it with styles.
+ */
+$app->on('collections.save.after', function($name, &$entry, $isUpdate) use($app) {
+
   $collection = $app->module('collections')->collection($name);
 
-  // Get the collection fields' definitions.
-  $fields = [];
-  foreach ($collection['fields'] as $field) {
-    $fields[$field['name']] = $field;
-  }
+  $entry = $app->module('imagestyles')->updateEntryStyles($collection, $entry);
 
-  // Get all available styles.
-  $styles = array_map(function($style) {
-    return $style['name'];
-  }, $app->module('imagestyles')->styles());
-
-  if (empty($styles)) {
-    return;
-  }
-
-  // Get all paths inside a collection entry.
-  $paths = array_dot($entry);
-  foreach ($paths as $key => $value) {
-    if (!preg_match('/^.*\.path$/', $key)) {
-      continue;
-    }
-    $parent_path = str_replace('.path', '', $key);
-    $parent = array_get($entry, $parent_path);
-    $parent['styles'] = $app->module('imagestyles')->getUrlStyles($value, $styles);
-    array_set($entry, $parent_path, $parent);
-  }
-
+  // Re-save the collection by including the styles.
+  $app->storage->save("collections/{$collection['_id']}", $entry);
 });
+
+/**
+ * Helper function to get defined styles from the fields definitions.
+ */
+function _get_field_styles($array, $field_name, $fields) {
+  $styles = [];
+  foreach ($array as $key => $value) {
+    if (preg_match("/\.name$/", $key) && $value === $field_name) {
+      $parent_path = str_replace('.name', '', $key);
+      $parent = array_get($fields, $parent_path);
+      if (isset($parent['options']) && isset($parent['options']['styles'])) {
+        $styles = array_merge($styles, $parent['options']['styles']);
+      }
+    }
+  }
+
+  return array_unique(array_filter($styles));
+}
