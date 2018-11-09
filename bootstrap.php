@@ -23,7 +23,7 @@ $this->on('cockpit.filestorages.init', function(&$storages) use ($app) {
  */
 $this->module('imagestyles')->extend([
 
-  'getUrlStyles' => function ($path, array $styles = [], $settings = []) : array {
+  'getImageUrlStyles' => function ($path, array $styles = [], $settings = []) : array {
     $uploads_path = ltrim(str_replace(COCKPIT_DIR, '', $this->app->path("#uploads:")), '/');
     $results = [];
     $path = ltrim($path, '/');
@@ -33,6 +33,23 @@ $this->module('imagestyles')->extend([
 
     foreach ($styles as $style) {
       if ($url = $this->applyStyle($style, $path, $settings)) {
+        $results[] = [
+          'style' => $style,
+          'path' => $url,
+        ];
+      }
+    }
+
+    return $results;
+  },
+
+  'getAssetUrlStyles' => function ($asset, array $styles = [], $settings = []) : array {
+    if (!empty($asset['fp'])) {
+      $settings['fp'] = TRUE;
+    }
+
+    foreach ($styles as $style) {
+      if ($url = $this->applyStyle($style, $asset['_id'], $settings)) {
         $results[] = [
           'style' => $style,
           'path' => $url,
@@ -124,6 +141,7 @@ $this->module('imagestyles')->extend([
 
     // Get all paths inside a collection entry.
     $paths = array_dot($entry);
+
     foreach ($paths as $key => $value) {
       if (!preg_match('/\.path$/', $key)) {
         continue;
@@ -160,7 +178,15 @@ $this->module('imagestyles')->extend([
 
       $settings['token'] = $parent['cimgt'];
 
-      $parent['styles'] = $this->app->module('imagestyles')->getUrlStyles($value, $field_styles, $settings);
+      // If is an asset use _id instead of path so focal point can be used.
+      if (!empty($parent['_id'])
+        && $asset = $this->app->storage->findOne('cockpit/assets', ['_id' => $parent['_id']])) {
+        $parent['styles'] = $this->app->module('imagestyles')->getAssetUrlStyles($asset, $field_styles, $settings);
+      }
+      else {
+        $parent['styles'] = $this->app->module('imagestyles')->getImageUrlStyles($value, $field_styles, $settings);
+      }
+
 
       array_set($entry, $parent_path, $parent);
     }
@@ -328,6 +354,11 @@ $this->module('imagestyles')->extend([
     // Set anchor if its defined in the style.
     if (isset($style['anchor'])) {
       $options['fp'] = $style['anchor'];
+    }
+
+    // If focal point is set to be used unset it from the options so thumbnail function will retrieve it.
+    if (isset($settings['fp']) && (bool) $settings['fp']) {
+      unset($options['fp']);
     }
 
     // Override style definitions for base64 with settings argument.
