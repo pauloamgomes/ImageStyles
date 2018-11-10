@@ -40,8 +40,16 @@ function _get_field_styles($array, $field_name, $fields) {
     if (preg_match("/\.name$/", $key) && $value === $field_name) {
       $parent_path = str_replace('.name', '', $key);
       $parent = array_get($fields, $parent_path);
-      if (isset($parent['options']) && isset($parent['options']['styles'])) {
+
+      if (!isset($parent['options'])) {
+        continue;
+      }
+
+      if (isset($parent['options']['styles'])) {
         $styles = array_merge($styles, $parent['options']['styles']);
+      }
+      elseif (isset($parent['options']['field']) && isset($parent['options']['field']['styles'])) {
+        $styles = array_merge($styles, $parent['options']['field']['styles']);
       }
     }
   }

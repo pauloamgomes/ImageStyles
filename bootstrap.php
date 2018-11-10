@@ -159,6 +159,14 @@ $this->module('imagestyles')->extend([
       $segments = explode('.', $parent_path);
       $field_name = end($segments);
 
+      // If last segment is an array (e.g. gallery, repeaters, etc..) get the previous one.
+      if (is_numeric($field_name) && count($segments) > 1) {
+        $field_name = $segments[count($segments) - 2];
+      }
+      elseif ($field_name === 'value' && count($segments) > 2) {
+        $field_name = $segments[count($segments) - 3];
+      }
+
       $field_styles = _get_field_styles($dot_fields, $field_name, $fields);
 
       // If no field styles are found (e.g. core layout components like image or gallery) we apply to all.
@@ -402,8 +410,7 @@ $this->module('imagestyles')->extend([
     }
 
     // Remove the storage folder.
-
-    $thumb = str_replace('storage/', '/', $thumb);
+    $thumb = str_replace('storage/', '', $thumb);
 
     if (!empty($settings['token'])) {
       $thumb = "{$thumb}?cimgt={$settings['token']}";
