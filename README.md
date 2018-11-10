@@ -67,7 +67,7 @@ A query string (cimgt) based on the modification time is used as a simple cache 
 ## Installation
 
 1. Confirm that you have Cockpit CMS (Next branch) installed and working.
-2. Download zip and extract to 'your-cockpit-docroot/addons' (e.g. cockpitcms/addons/ImageStyles)
+2. Download zip and extract to 'your-cockpit-docroot/addons' (The extracted folder name must be renamed to ImageStyles, e.g. cockpitcms/addons/**ImageStyles**)
 3. Access module settings (http://your-cockpit-site/image-styles) and confirm that page loads.
 
 ## Configuration
