@@ -401,13 +401,13 @@ $this->module('imagestyles')->extend([
 
     // If site url is defined in the config.
     $site_url = $this->app->getSiteUrl();
-    if (strpos($thumb, $site_url) !== FALSE) {
+    if (strpos($thumb, $site_url) !== FALSE && $site_url !== '/') {
       $thumb = str_replace($site_url, '', $thumb);
     }
     // Get the base url and remove it.
     $base_url = $this->app->baseUrl('/');
 
-    if (strpos($thumb, $base_url) !== FALSE) {
+    if (strpos($thumb, $base_url) !== FALSE && $base_url !== '/') {
       $thumb = str_replace($base_url, '', $thumb);
     }
 
