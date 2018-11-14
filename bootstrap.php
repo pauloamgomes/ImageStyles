@@ -10,12 +10,17 @@
  * This is required in way to make use of core cockpit thumbnail() function.
  */
 $this->on('cockpit.filestorages.init', function(&$storages) use ($app) {
-  $storages['styles'] = [
-    'adapter' => 'League\Flysystem\Adapter\Local',
-    'args' => [COCKPIT_PUBLIC_STORAGE_FOLDER . '/styles'],
-    'mount' => TRUE,
-    'url' => $app->pathToUrl('#storage:', TRUE) . 'styles',
-  ];
+  $config = $this->retrieve('config/cloudstorage');
+
+  // If we don't have any cloudstorage configuration rely only on localstorage.
+  if (!$config || !isset($config['styles'])) {
+    $storages['styles'] = [
+      'adapter' => 'League\Flysystem\Adapter\Local',
+      'args' => [COCKPIT_PUBLIC_STORAGE_FOLDER . '/styles'],
+      'mount' => TRUE,
+      'url' => $app->pathToUrl('#storage:', TRUE) . 'styles',
+    ];
+  }
 });
 
 /**
@@ -47,6 +52,8 @@ $this->module('imagestyles')->extend([
     if (!empty($asset['fp'])) {
       $settings['fp'] = TRUE;
     }
+
+    $results = [];
 
     foreach ($styles as $style) {
       if ($url = $this->applyStyle($style, $asset['_id'], $settings)) {

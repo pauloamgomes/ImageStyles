@@ -83,6 +83,23 @@ A set of permissions that can be configured per role:
 - manage.admin - can create, edit and delete image styles
 - rebuild - can rebuild the generated styles for a collection
 
+### Support for CloudStorage
+
+Since version 1.9 cloud storage is supported via the CloudStorage addon - https://github.com/agentejo/CloudStorage.
+
+If you want your styles saved on a cloud provider like s3 add in config/config.yaml:
+
+```yaml
+cloudstorage:
+  styles:
+    type: s3
+    key: <KEY>
+    secret: <SECRET>
+    region: <REGION>
+    bucket: <BUCKET-NAME>
+    prefix: styles
+```
+
 ## Supported fields
 
 The Addon supports the below field types:
