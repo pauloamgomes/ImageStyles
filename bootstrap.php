@@ -417,9 +417,7 @@ $this->module('imagestyles')->extend([
       $thumb = rtrim($base_url, '/') . $thumb;
     }
 
-    // Remove the storage folder.
-    $thumb = str_replace('storage/', '', $thumb);
-
+    // If token is present (and output is not base64) append it.
     if (!empty($settings['token']) && !$options['base64']) {
       $thumb = "{$thumb}?cimgt={$settings['token']}";
     }
