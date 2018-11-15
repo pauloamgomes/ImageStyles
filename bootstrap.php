@@ -404,6 +404,7 @@ $this->module('imagestyles')->extend([
     if (strpos($thumb, $site_url) !== FALSE && $site_url !== '/') {
       $thumb = str_replace($site_url, '', $thumb);
     }
+
     // Get the base url and remove it.
     $base_url = $this->app->baseUrl('/');
 
@@ -419,7 +420,7 @@ $this->module('imagestyles')->extend([
     // Remove the storage folder.
     $thumb = str_replace('storage/', '', $thumb);
 
-    if (!empty($settings['token'])) {
+    if (!empty($settings['token']) && !$options['base64']) {
       $thumb = "{$thumb}?cimgt={$settings['token']}";
     }
 
