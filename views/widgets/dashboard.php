@@ -51,7 +51,7 @@
                 @lang('No Image Styles').
 
                 @hasaccess?('imagestyles', 'manage.admin')
-                <a href="@route('/image-styles/create')">@lang('Create new')</a>.
+                <a href="@route('/image-styles/style')">@lang('Create new')</a>.
                 @end
 
             </div>
