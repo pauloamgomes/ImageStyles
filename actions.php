@@ -35,6 +35,24 @@ $app->on('collections.save.after', function($name, &$entry, $isUpdate) use($app)
 });
 
 /**
+ * On each singleton.saveData.after populate it with styles.
+ */
+$app->on('singleton.saveData.before', function($singleton, &$data) use($app) {
+
+  if (!$app->module('imagestyles')->hasStyles($singleton)) {
+    return;
+  }
+
+  // Simulate a collection entry by adding an id.
+  $data['_id'] = $singleton['_id'];
+  // So now we can treat the singleton data as an collection entry.
+  $data = $app->module('imagestyles')->updateEntryStyles($singleton, $data);
+  // Remove added id.
+  unset($data['_id']);
+});
+
+
+/**
  * Helper function to get defined styles from the fields definitions.
  */
 function _get_field_styles($array, $field_name, $fields) {
