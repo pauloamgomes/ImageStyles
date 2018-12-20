@@ -35,7 +35,7 @@ $app->on('collections.save.after', function($name, &$entry, $isUpdate) use($app)
 });
 
 /**
- * On each singleton.saveData.after populate it with styles.
+ * On each singleton.saveData.before populate it with styles.
  */
 $app->on('singleton.saveData.before', function($singleton, &$data) use($app) {
 
