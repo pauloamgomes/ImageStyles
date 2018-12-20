@@ -24,6 +24,9 @@ $app->on('collections.remove.before', function($name, $criteria) use($app) {
 $app->on('collections.save.after', function($name, &$entry, $isUpdate) use($app) {
 
   $collection = $app->module('collections')->collection($name);
+  if (!$app->module('imagestyles')->hasStyles($collection)) {
+    return;
+  }
 
   $entry = $app->module('imagestyles')->updateEntryStyles($collection, $entry);
 

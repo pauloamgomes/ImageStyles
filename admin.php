@@ -17,7 +17,7 @@ $this("acl")->addResource('imagestyles', [
  */
 $this->on('cockpit.view.settings.item', function () {
   if ($this->module('cockpit')->hasaccess('imagestyles', 'manage.view')) {
-     $this->renderView("imagestyles:views/partials/settings.php");
+    $this->renderView("imagestyles:views/partials/settings.php");
   }
 });
 
@@ -41,7 +41,7 @@ $this->on("admin.dashboard.widgets", function ($widgets) {
 
 }, 100);
 
-
+// Add entry-aside to collections.
 $this->on('collections.entry.aside', function() {
   $this->renderView("imagestyles:views/partials/entry-aside.php");
 });

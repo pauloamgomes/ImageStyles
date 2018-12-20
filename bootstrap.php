@@ -28,6 +28,18 @@ $this->on('cockpit.filestorages.init', function(&$storages) use ($app) {
  */
 $this->module('imagestyles')->extend([
 
+  'hasStyles' => function(array $collection) {
+    $fields = array_dot($collection['fields']);
+    $paths = [];
+    $imageTypes = ['image', 'asset', 'gallery'];
+    foreach ($fields as $key => $value) {
+      if (preg_match('/\.type$/', $key) && in_array($value, $imageTypes)) {
+        return TRUE;
+      }
+    }
+    return FALSE;
+  },
+
   'getImageUrlStyles' => function ($path, array $styles = [], $settings = []) : array {
     $uploads_path = ltrim(str_replace(COCKPIT_DIR, '', $this->app->path("#uploads:")), '/');
     $results = [];
@@ -401,14 +413,14 @@ $this->module('imagestyles')->extend([
 
     // If site url is defined in the config.
     $site_url = $this->app->getSiteUrl();
-    if (strpos($thumb, $site_url) !== FALSE && $site_url !== '/') {
+    if ($site_url && strpos($thumb, $site_url) !== FALSE && $site_url !== '/') {
       $thumb = str_replace($site_url, '', $thumb);
     }
 
     // Get the base url and remove it.
     $base_url = $this->app->baseUrl('/');
 
-    if (strpos($thumb, $base_url) !== FALSE && $base_url !== '/') {
+    if ($base_url && strpos($thumb, $base_url) !== FALSE && $base_url !== '/') {
       $thumb = str_replace($base_url, '', $thumb);
     }
 
