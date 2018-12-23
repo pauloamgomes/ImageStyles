@@ -102,7 +102,8 @@ $this->module('imagestyles')->extend([
     }
 
     // Prepare the collection styles folder.
-    $styles_path = '#storage:styles/' . $collection['name'] . '/' . $entry['_id'];
+    $_id = $entry['_id'] ?? $collection['_id'];
+    $styles_path = '#storage:styles/' . $collection['name'] . '/' . $_id;
 
     if (!$this->app->path($styles_path)) {
       if (!$this->app->helper('fs')->mkdir($styles_path)) {
@@ -115,7 +116,7 @@ $this->module('imagestyles')->extend([
       $this->app->helper('fs')->write($this->app->path($styles_path) .'/index.html', '');
     }
 
-    $settings['stylesfolder'] = 'styles://' . $collection['name'] . '/' . $entry['_id'];
+    $settings['stylesfolder'] = 'styles://' . $collection['name'] . '/' . $_id;
 
     // Get the collection fields' definitions.
     $fields = [];

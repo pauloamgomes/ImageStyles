@@ -43,12 +43,7 @@ $app->on('singleton.saveData.before', function($singleton, &$data) use($app) {
     return;
   }
 
-  // Simulate a collection entry by adding an id.
-  $data['_id'] = $singleton['_id'];
-  // So now we can treat the singleton data as an collection entry.
   $data = $app->module('imagestyles')->updateEntryStyles($singleton, $data);
-  // Remove added id.
-  unset($data['_id']);
 });
 
 
