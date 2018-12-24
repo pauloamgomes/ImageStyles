@@ -104,3 +104,29 @@ function array_dot($array, $prepend = '') {
   }
   return $results;
 }
+
+/**
+ * Helper function to get defined styles from the fields definitions.
+ */
+function _get_field_styles($array, $field_name, $fields) {
+  $styles = [];
+  foreach ($array as $key => $value) {
+    if (preg_match("/\.name$/", $key) && $value === $field_name) {
+      $parent_path = str_replace('.name', '', $key);
+      $parent = array_get($fields, $parent_path);
+
+      if (!isset($parent['options'])) {
+        continue;
+      }
+
+      if (isset($parent['options']['styles'])) {
+        $styles = array_merge($styles, $parent['options']['styles']);
+      }
+      elseif (isset($parent['options']['field']) && isset($parent['options']['field']['styles'])) {
+        $styles = array_merge($styles, $parent['options']['field']['styles']);
+      }
+    }
+  }
+
+  return array_unique(array_filter($styles));
+}
