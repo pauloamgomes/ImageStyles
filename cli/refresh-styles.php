@@ -21,6 +21,10 @@ if (!$collection = $app->module('collections')->collection($name)) {
   return CLI::writeln("Collection '{$name}' doesnt exists!", FALSE);
 }
 
+if (!$app->module('imagestyles')->hasStyles($collection)) {
+  return CLI::writeln("Collection '{$name}' doesnt have any image/asset fields!", FALSE);
+}
+
 $entries = $app->storage->getCollection("collections/{$collection['_id']}")->find();
 $entries = $entries->toArray();
 
