@@ -65,8 +65,6 @@ $this->module('imagestyles')->extend([
       $settings['fp'] = TRUE;
     }
 
-    $results = [];
-
     foreach ($styles as $style) {
       if ($url = $this->applyStyle($style, $asset['_id'], $settings)) {
         $results[] = [
@@ -171,6 +169,7 @@ $this->module('imagestyles')->extend([
       }
       $parent_path = str_replace('.path', '', $key);
       $parent = array_get($entry, $parent_path);
+      $parent['styles'] = [];
 
       if (!isset($parent['path'])) {
         continue;
@@ -206,15 +205,21 @@ $this->module('imagestyles')->extend([
 
       $settings['token'] = $parent['cimgt'];
 
+      // Check if its an asset.
+      $assetId = NULL;
+      if (!empty($parent['_id'])) {
+        $assetId = $parent['_id'];
+      }
+      elseif (isset($parent['meta']) && !empty($parent['meta']['asset'])) {
+        $assetId = $parent['meta']['asset'];
+      }
       // If is an asset use _id instead of path so focal point can be used.
-      if (!empty($parent['_id'])
-        && $asset = $this->app->storage->findOne('cockpit/assets', ['_id' => $parent['_id']])) {
+      if ($assetId && $asset = $this->app->storage->findOne('cockpit/assets', ['_id' => $assetId])) {
         $parent['styles'] = $this->app->module('imagestyles')->getAssetUrlStyles($asset, $field_styles, $settings);
       }
       else {
         $parent['styles'] = $this->app->module('imagestyles')->getImageUrlStyles($value, $field_styles, $settings);
       }
-
 
       array_set($entry, $parent_path, $parent);
     }

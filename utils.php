@@ -33,7 +33,7 @@ function array_set(&$array, $key, $value) {
     // to hold the next value, allowing us to create the arrays to hold final
     // values at the correct depth. Then we'll keep digging into the array.
     if ( ! isset($array[$key]) || ! is_array($array[$key])) {
-      $array[$key] = array();
+      $array[$key] = [];
     }
     $array =& $array[$key];
   }
@@ -73,7 +73,7 @@ function array_get($array, $key, $default = null) {
  * @return array
  */
 function dot($array, $prepend = '') {
-  $results = array();
+  $results = [];
   foreach ($array as $key => $value) {
     if (is_array($value)) {
       $results = array_merge($results, dot($value, $prepend.$key.'.'));
@@ -93,7 +93,7 @@ function dot($array, $prepend = '') {
  * @return array
  */
 function array_dot($array, $prepend = '') {
-  $results = array();
+  $results = [];
   foreach ($array as $key => $value) {
     if (is_array($value)) {
       $results = array_merge($results, dot($value, $prepend.$key.'.'));
@@ -119,7 +119,7 @@ function _get_field_styles($array, $field_name, $fields) {
         continue;
       }
 
-      if (isset($parent['options']['styles'])) {
+      if (!empty($parent['options']['styles']) && is_array($parent['options']['styles'])) {
         $styles = array_merge($styles, $parent['options']['styles']);
       }
       elseif (isset($parent['options']['field']) && isset($parent['options']['field']['styles'])) {
