@@ -61,6 +61,8 @@ $this->module('imagestyles')->extend([
   },
 
   'getAssetUrlStyles' => function ($asset, array $styles = [], $settings = []) : array {
+    $results = [];
+
     if (!empty($asset['fp'])) {
       $settings['fp'] = TRUE;
     }
@@ -369,11 +371,11 @@ $this->module('imagestyles')->extend([
 
     $options = [
       'src' => $src,
-      'rebuild' => isset($settings['rebuild']) ? $settings['rebuild'] : FALSE,
-      'output' => isset($settings['output']) ? $settings['output'] : FALSE,
+      'rebuild' => isset($settings['rebuild']) ? (bool) $settings['rebuild'] : FALSE,
+      'output' => isset($settings['output']) ? (bool) $settings['output'] : FALSE,
       'quality' => isset($style['quality']) ? $style['quality'] : FALSE,
-      'base64' => isset($style['base64']) ? $style['base64'] : FALSE,
-      'domain' => isset($style['domain']) ? $style['domain'] : FALSE,
+      'base64' => isset($style['base64']) ? (bool) $style['base64'] : FALSE,
+      'domain' => isset($style['domain']) ? (bool) $style['domain'] : FALSE,
       'mode' => $style['mode'],
       'width' => $style['width'],
       'height' => $style['height'],
@@ -417,6 +419,11 @@ $this->module('imagestyles')->extend([
     // Generate the styled image (thumb) using cockpit thumbnail() function.
     $thumb = $this->app->module('cockpit')->thumbnail($options);
 
+    // If output should be base64 don't continue;
+    if ($options['base64']) {
+      return $thumb;
+    }
+
     // If site url is defined in the config.
     $site_url = $this->app->getSiteUrl();
     if ($site_url && strpos($thumb, $site_url) !== FALSE && $site_url !== '/') {
@@ -428,6 +435,20 @@ $this->module('imagestyles')->extend([
 
     if ($base_url && strpos($thumb, $base_url) !== FALSE && $base_url !== '/') {
       $thumb = str_replace($base_url, '', $thumb);
+    }
+
+    // If domain is not set remove it (e.g. when using cloudstorage).
+    if (!$options['domain'] && strpos($thumb, 'http') === 0) {
+      $parts = parse_url($thumb);
+      $config = $this->app->retrieve('config/cloudstorage');
+
+      // Check if styles are using S3 cloudstorage.
+      if ($config && !empty($config['styles']['bucket'])) {
+        $thumb = str_replace("/{$config['styles']['bucket']}", '', $parts['path']);
+      }
+      else {
+        $thumb = $parts['path'];
+      }
     }
 
     // If domain is set to true force it in the output.
