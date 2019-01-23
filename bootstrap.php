@@ -190,9 +190,9 @@ $this->module('imagestyles')->extend([
 
       $field_styles = _get_field_styles($dot_fields, $field_name, $fields);
 
-      // If no field styles are found (e.g. core layout components like image or gallery) we apply to all.
+      // Only continue if there are styles to apply.
       if (empty($field_styles)) {
-        $field_styles = $styles;
+        continue;
       }
 
       // Set a query string token to force update of images (to avoid caching).
