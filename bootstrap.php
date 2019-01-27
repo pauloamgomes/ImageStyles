@@ -187,7 +187,7 @@ $this->module('imagestyles')->extend([
       if (is_numeric($field_name) && count($segments) === 2) {
         $field_name = $segments[count($segments) - 2];
         $dot_fields_field = array_filter($dot_fields, function($dot_field) use ($field_container) {
-          if (preg_match("/^{$field_container}.*\.styles/", $dot_field)) {
+          if (preg_match("/^{$field_container}\..*\.styles/", $dot_field)) {
             return $dot_field;
           }
         }, ARRAY_FILTER_USE_KEY);
@@ -196,15 +196,15 @@ $this->module('imagestyles')->extend([
       elseif ($field_name === 'value' && count($segments) > 2) {
         $field_name = $segments[count($segments) - 3];
         $dot_fields_field = array_filter($dot_fields, function($dot_field) use ($field_container) {
-          if (preg_match("/^{$field_container}.*\.styles/", $dot_field)) {
+          if (preg_match("/^{$field_container}\..*\.styles/", $dot_field)) {
             return $dot_field;
           }
         }, ARRAY_FILTER_USE_KEY);
       }
       // Set.
       elseif (count($segments) === 2) {
-        $dot_fields_field = array_filter($dot_fields, function($dot_field) use ($field_container) {
-          if (preg_match("/^{$field_container}\.styles/", $dot_field)) {
+        $dot_fields_field = array_filter($dot_fields, function($dot_field) use ($field_container, $field_name) {
+          if (preg_match("/^{$field_container}\..*\.styles/", $dot_field)) {
             return $dot_field;
           }
         }, ARRAY_FILTER_USE_KEY);
@@ -212,16 +212,25 @@ $this->module('imagestyles')->extend([
       // Asset.
       elseif (count($segments) === 1) {
         $dot_fields_field = array_filter($dot_fields, function($dot_field) use ($field_name) {
-          if (preg_match("/^{$field_name}.*\.styles/", $dot_field)) {
+          if (preg_match("/^{$field_name}\..*\.styles/", $dot_field)) {
             return $dot_field;
           }
         }, ARRAY_FILTER_USE_KEY);
       }
       // Layout field components.
       elseif (count($segments) > 3) {
+        // Gallery inside field layout.
+        if (is_numeric($field_name)) {
+          $field_name = $segments[count($segments) - 2];
+        }
+        elseif ($field_name === 'value') {
+          $field_name = $segments[count($segments) - 3];
+        }
+
         $field_container = $segments[3];
-        $dot_fields_field = array_filter($dot_fields, function($dot_field) use ($field_container) {
-          if (preg_match("/_components\..*{$field_container}\..*\.options\.styles/", $dot_field)) {
+
+        $dot_fields_field = array_filter($dot_fields, function($dot_field) use ($field_container, $field_name) {
+          if (preg_match("/_components\.[a-zA-Z0-9_]+\.{$field_container}\..*\.styles/", $dot_field)) {
             return $dot_field;
           }
         }, ARRAY_FILTER_USE_KEY);
