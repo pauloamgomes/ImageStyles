@@ -178,17 +178,56 @@ $this->module('imagestyles')->extend([
       }
 
       $segments = explode('.', $parent_path);
+      $field_container = $segments[0];
       $field_name = end($segments);
 
-      // If last segment is an array (e.g. gallery, repeaters, etc..) get the previous one.
-      if (is_numeric($field_name) && count($segments) > 1) {
+      $dot_fields_field = [];
+
+      // Gallery.
+      if (is_numeric($field_name) && count($segments) === 2) {
         $field_name = $segments[count($segments) - 2];
+        $dot_fields_field = array_filter($dot_fields, function($dot_field) use ($field_container) {
+          if (preg_match("/^{$field_container}.*\.styles/", $dot_field)) {
+            return $dot_field;
+          }
+        }, ARRAY_FILTER_USE_KEY);
       }
+      // Repeater.
       elseif ($field_name === 'value' && count($segments) > 2) {
         $field_name = $segments[count($segments) - 3];
+        $dot_fields_field = array_filter($dot_fields, function($dot_field) use ($field_container) {
+          if (preg_match("/^{$field_container}.*\.styles/", $dot_field)) {
+            return $dot_field;
+          }
+        }, ARRAY_FILTER_USE_KEY);
+      }
+      // Set.
+      elseif (count($segments) === 2) {
+        $dot_fields_field = array_filter($dot_fields, function($dot_field) use ($field_container) {
+          if (preg_match("/^{$field_container}\.styles/", $dot_field)) {
+            return $dot_field;
+          }
+        }, ARRAY_FILTER_USE_KEY);
+      }
+      // Asset.
+      elseif (count($segments) === 1) {
+        $dot_fields_field = array_filter($dot_fields, function($dot_field) use ($field_name) {
+          if (preg_match("/^{$field_name}.*\.styles/", $dot_field)) {
+            return $dot_field;
+          }
+        }, ARRAY_FILTER_USE_KEY);
+      }
+      // Layout field components.
+      elseif (count($segments) > 3) {
+        $field_container = $segments[3];
+        $dot_fields_field = array_filter($dot_fields, function($dot_field) use ($field_container) {
+          if (preg_match("/_components\..*{$field_container}\..*\.options\.styles/", $dot_field)) {
+            return $dot_field;
+          }
+        }, ARRAY_FILTER_USE_KEY);
       }
 
-      $field_styles = _get_field_styles($dot_fields, $field_name, $fields);
+      $field_styles = array_unique(array_values($dot_fields_field));
 
       // Only continue if there are styles to apply.
       if (empty($field_styles)) {

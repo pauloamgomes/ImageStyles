@@ -104,39 +104,3 @@ function array_dot($array, $prepend = '') {
   }
   return $results;
 }
-
-/**
- * Helper function to get defined styles from the fields definitions.
- */
-function _get_field_styles($array, $field_name, $fields) {
-  $styles = [];
-  foreach ($array as $key => $value) {
-    if (preg_match("/\.name$/", $key) && $value === $field_name) {
-      $parent_path = str_replace('.name', '', $key);
-      $parent = array_get($fields, $parent_path);
-
-      if (!isset($parent['options'])) {
-        continue;
-      }
-
-      if (!empty($parent['options']['styles']) && is_array($parent['options']['styles'])) {
-        $styles = array_merge($styles, $parent['options']['styles']);
-      }
-      elseif (isset($parent['options']['field']) && isset($parent['options']['field']['styles'])) {
-        $styles = array_merge($styles, $parent['options']['field']['styles']);
-      }
-      elseif (isset($parent['options']['field']['options']) || !empty($parent['options']['field']['options']['fields'])) {
-        $subDotArray = array_dot($parent['options']['field']);
-        $subStyles = [];
-        foreach ($subDotArray as $dotKey => $dotEntry) {
-          if (preg_match("/^options\.styles/", $dotKey)) {
-            $subStyles[] = array_get($parent['options']['field'], $dotKey);
-          }
-        }
-        $styles = array_merge($styles, $subStyles);
-      }
-    }
-  }
-
-  return array_unique(array_filter($styles));
-}
