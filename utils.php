@@ -126,11 +126,11 @@ function _get_field_styles($array, $field_name, $fields) {
         $styles = array_merge($styles, $parent['options']['field']['styles']);
       }
       elseif (isset($parent['options']['field']['options']) || !empty($parent['options']['field']['options']['fields'])) {
-        $subDotArray = array_dot($parent['options']['field']['options']);
+        $subDotArray = array_dot($parent['options']['field']);
         $subStyles = [];
         foreach ($subDotArray as $dotKey => $dotEntry) {
-          if (preg_match("/\.options\.styles/", $dotKey)) {
-            $subStyles[] = array_get($parent['options']['field']['options'], $dotKey);
+          if (preg_match("/^options\.styles/", $dotKey)) {
+            $subStyles[] = array_get($parent['options']['field'], $dotKey);
           }
         }
         $styles = array_merge($styles, $subStyles);
