@@ -31,7 +31,7 @@ $this->module('imagestyles')->extend([
   'hasStyles' => function(array $collection) {
     $fields = array_dot($collection['fields']);
     $paths = [];
-    $imageTypes = ['image', 'asset', 'gallery'];
+    $imageTypes = ['image', 'asset', 'gallery', 'repeater', 'set', 'layout'];
     foreach ($fields as $key => $value) {
       if (preg_match('/\.type$/', $key) && in_array($value, $imageTypes)) {
         return TRUE;
