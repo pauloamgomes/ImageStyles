@@ -233,6 +233,9 @@ $this->module('imagestyles')->extend([
           if (preg_match("/_components\.[a-zA-Z0-9_]+\.{$field_container}\..*\.styles/", $dot_field)) {
             return $dot_field;
           }
+          elseif (preg_match("/_components\.[a-zA-Z0-9_]+\.{$field_name}\..*\.styles/", $dot_field)) {
+            return $dot_field;
+          }
         }, ARRAY_FILTER_USE_KEY);
       }
 
