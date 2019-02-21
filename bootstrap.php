@@ -209,6 +209,13 @@ $this->module('imagestyles')->extend([
           }
         }, ARRAY_FILTER_USE_KEY);
       }
+      elseif (is_numeric($field_name) && count($segments) > 2) {
+        $dot_fields_field = array_filter($dot_fields, function($dot_field) use ($field_container, $field_name) {
+          if (preg_match("/^{$field_container}\..*\.styles/", $dot_field)) {
+            return $dot_field;
+          }
+        }, ARRAY_FILTER_USE_KEY);
+      }
       // Asset.
       elseif (count($segments) === 1) {
         $dot_fields_field = array_filter($dot_fields, function($dot_field) use ($field_name) {
