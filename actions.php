@@ -11,9 +11,11 @@ include_once __DIR__ . '/utils.php';
  * Remove all saved styles when removing the collection.
  */
 $app->on('collections.remove.before', function($name, $criteria) use($app) {
-  $styles_path = '#storage:styles/' . $name . '/' . $criteria['_id'];
-  if ($app->path($styles_path)) {
-    $app->helper('fs')->delete($styles_path);
+  if (!empty($criteria['_id'])) {
+    $styles_path = '#storage:styles/' . $name . '/' . $criteria['_id'];
+    if ($app->path($styles_path)) {
+      $app->helper('fs')->delete($styles_path);
+    }
   }
 });
 
