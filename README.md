@@ -115,6 +115,26 @@ Above fields can be used in nested fields like:
 - Repeater
 
 
+## Custom fields
+
+Custom fields can be supported by implementing the action `imagestyles.fields` and providing your field structure there, e.g.:
+
+```php
+$app->on('imagestyles.fields', function ($collection, &$fields) {
+  foreach ($collection['fields'] as $field) {
+    if ($field['type'] === 'metatags') {
+      $defaultStyles = ['Style1', 'Style2'];
+      if (!empty($field['options'] && !empty($field['options']['image']))) {
+        $styles = $field['options']['image']['styles'] ?? $defaultStyles;
+      }
+      $field['options']['image']['styles'] = $styles;
+      $fields[$field['name']] = $field;
+      break;
+    }
+  }
+});
+```
+
 When configuring each field its just required to set a "styles" attribute as below:
 
 ### Set field example
@@ -197,6 +217,6 @@ For configuring an image field to have one or more styles automatically added it
 
 ## Copyright and license
 
-Copyright 2018 pauloamgomes under the MIT license.
+Copyright since 2018 pauloamgomes under the MIT license.
 
 
