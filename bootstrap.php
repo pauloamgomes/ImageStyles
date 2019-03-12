@@ -133,6 +133,9 @@ $this->module('imagestyles')->extend([
       }
     }
 
+    // Provide imagestyles to custom fields.
+    $this->app->trigger("imagestyles.fields", [$collection, &$fields]);
+
     // Get all image fields from layout components.
     $content = '{}';
     if ($file = $this->app->path('#storage:components.json')) {
