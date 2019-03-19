@@ -135,6 +135,7 @@ $this->module('imagestyles')->extend([
 
     // Provide imagestyles to custom fields.
     $this->app->trigger("imagestyles.fields", [$collection, &$fields]);
+    $this->app->trigger("imagestyles.fields.{$collection['name']}", [$collection, &$fields]);
 
     // Get all image fields from layout components.
     $content = '{}';
@@ -227,7 +228,7 @@ $this->module('imagestyles')->extend([
           }
         }, ARRAY_FILTER_USE_KEY);
       }
-      // Layout field components.
+      // Layout field components and multi level nested elements.
       elseif (count($segments) > 3) {
         // Gallery inside field layout.
         if (is_numeric($field_name)) {
@@ -244,6 +245,9 @@ $this->module('imagestyles')->extend([
             return $dot_field;
           }
           elseif (preg_match("/_components\.[a-zA-Z0-9_]+\.{$field_name}\..*\.styles/", $dot_field)) {
+            return $dot_field;
+          }
+          elseif (preg_match("/.*\.{$field_name}\..*\.styles/", $dot_field)) {
             return $dot_field;
           }
         }, ARRAY_FILTER_USE_KEY);
