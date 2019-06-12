@@ -24,6 +24,10 @@ $app->on('collections.remove.before', function($name, $criteria) use($app) {
  */
 $app->on('collections.save.after', function($name, &$entry, $isUpdate) use($app) {
 
+  if ($app->memory->get('bypassSyles', FALSE)) {
+    return;
+  }
+
   $collection = $app->module('collections')->collection($name);
   if (!$app->module('imagestyles')->hasStyles($collection)) {
     return;
