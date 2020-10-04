@@ -35,7 +35,9 @@ foreach ($entries as $idx => $entry) {
   // Flush all image styles.
   $app->module('imagestyles')->deleteEntryStyles($name, $entry);
   // Generate new image styles.
-  $app->module('imagestyles')->updateEntryStyles($collection, $entry);
+  $entry = $app->module('imagestyles')->updateEntryStyles($collection, $entry);
+  // Save entry with style info
+  $app->storage->save("collections/{$collection['_id']}", $entry);
 }
 
 $total = count($entries);
